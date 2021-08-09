@@ -1,80 +1,163 @@
-const Fs = require('fs')
+const realmDB = require('./realm')
 
-///////// USERS /////////
+//////////// USERS ////////////
 
-exports.readUser = ({usuario, senha})=>{
-    const data = Fs.readFileSync('./data/users.json','utf-8')
-    const users = JSON.parse(data)
-
-    for(const user of users){
-        if((user.usuario == usuario)&&(user.senha == senha)){ 
-            return 'token'
-        }
+exports.createUser = async ({usuario, senha})=>{
+    try {
+        const realm = await realmDB()
+        realm.write(() => {
+            realm.create(
+                "users", 
+                { 
+                    usuario: usuario,
+                    password: senha,
+                }
+            )
+        })
+        return 'created'
+    } catch (error) {
+        console.log(error)
+        return 
     }
-    return null
 }
 
-writeUser = (currentFile)=>{
-    const data = JSON.stringify(currentFile)
-    Fs.writeFileSync('./data/users.json', data, 'utf-8')
+exports.readUser = async ({usuario, senha})=>{
+    try {
+        const realm = await realmDB()
+        const user = realm.objectForPrimaryKey("users", usuario)
+        
+        if(user){
+            if(user.password === senha){
+                return 'token'
+            }
+        }
+        return 'not found'
+    } catch (error) {
+        console.log(error)
+        return 'error'
+    }
 }
 
-exports.createUser = (data)=>{
-    const current = this.readUser()
-    current.push(data)
-    writeUser(current)
+exports.deleteUser = async (usuario)=>{
+    try {
+        const realm = await realmDB()
+        realm.write(() => {
+            var user = realm.objectForPrimaryKey("users", usuario)
+            realm.delete(user)
+            user = null
+        })
+        return `${usuario} deleted`
+    } catch (error) {
+        console.log(error)
+        return 'error'
+    }
+    return usuario
 }
 
-exports.deleteUser = (usuario)=>{
-    const data = this.readUser()
-    const index = data.findIndex((item)=>item.usuario === usuario)
-    data.splice(index,1)
-    writeUser(data)
-    return data
+exports.allUsers = async ()=>{
+    try {
+        const realm = await realmDB()
+        const users = realm.objects('users')
+
+        return users    
+
+    } catch (error) {
+        console.log(error)
+        return 'error'
+    }
 }
 
-///////// FILES /////////
-
-exports.readFile = ()=>{
-    const data = Fs.readFileSync('./data/data.json','utf-8')
-    return JSON.parse(data)
+exports.clearAll = async ()=>{
+    try {
+        const realm = await realmDB()
+        realm.write(()=>{
+            realm.deleteAll()
+        })
+        return 'clear'        
+    } catch (error) {
+        console.log(error)
+        return 'error'
+    }
 }
 
-writeFile = (currentFile)=>{
-    const data = JSON.stringify(currentFile)
-    Fs.writeFileSync('./data/data.json', data, 'utf-8')
+//////////// FILES ////////////
+
+exports.readFile = async () => {
+    try {
+        const realm = await realmDB()
+        const itens = realm.objects("estoque")
+        return itens
+
+    } catch (error) {
+        console.log(error)
+        return 'error'
+    }
 }
 
-exports.create = (data)=>{
-    const currentFile = this.readFile()
-    currentFile.push(data)
-    writeFile(currentFile)
-    return data
+exports.searchID = async (id)=>{
+    try {
+        const realm = await realmDB()
+        const result = realm.objectForPrimaryKey("estoque", id)
+        if(result){
+            return result
+        }
+        return
+    } catch (error) {
+        console.log(error)
+        return 'error'
+    }
 }
 
-exports.atualizar = (id, newData )=>{
-    const data = this.readFile()
-    const index = data.findIndex((item)=>item.id === id)
-    
-    data[index] = newData
-    writeFile(data)
-    return newData
+exports.create = async (data)=>{
+    try {
+        const realm = await realmDB()
+        const result = realm.objectForPrimaryKey("estoque", data.id)
+        if(result){
+            return 'registered item'
+        }
+        realm.write(() => {
+            realm.create('estoque', data)
+        })
+        return data
+    } catch (error) {
+        console.log(error)
+        return 'error'
+    }
 }
 
-exports.deletar = (id)=>{
-    const data = this.readFile()
-    const index = data.findIndex((item)=>item.id === id)
-    const item = data[index]
-    
-    data.splice(index,1)
-    writeFile(data)
+exports.updateItem = async (id, newData )=>{
+    try {
+        const realm = await realmDB()
+        const result = realm.objectForPrimaryKey("estoque", id)
+        if(!result){
+            return 'item not found'
+        }
+        realm.write(()=>{
+            result.nome = newData.nome 
+            result.preco = newData.preco
+            result.val = newData.val
+            result.tags = newData.tags
+            result.quant = newData.quant
+            result.update = newData.update
+        })
+        return 'update completed'
+    } catch (error) {
+        console.log(error)
+        return 'error'
+    }
+}
+
+exports.deletar = async (id)=>{
+    try {
+        const realm = await realmDB()
+        realm.write(()=>{
+            var item = realm.objectForPrimaryKey("estoque", id)
+            realm.delete(item)
+        })
+        return `${id} deleted`
+    } catch (error) {
+        console.log(error)
+        return 'error'
+    }
     return item
-}
-
-exports.searshID = async (id)=>{
-    const data = this.readFile()
-    const result = await data.filter((item)=>item.id === id)
-
-    if(result.length){ return result }
-    return null
 }

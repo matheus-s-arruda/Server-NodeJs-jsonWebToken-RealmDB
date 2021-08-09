@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node ."
+    "dev": "node .",
+    "host": "npx localtunnel --port 3000 --subdomain gearstorage"
   },
   "keywords": [],
   "author": "",
