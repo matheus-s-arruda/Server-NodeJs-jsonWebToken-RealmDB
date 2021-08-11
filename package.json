@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node .",
-    "host": "npx localtunnel --port 3000 --subdomain gearstorage"
+    "dev": "nodemon .",
+    "server": "node ."
   },
   "keywords": [],
   "author": "",
@@ -14,6 +14,7 @@
     "express": "^4.17.1",
     "jsonwebtoken": "^8.5.1",
     "nodemon": "^2.0.12",
+    "open": "^8.2.1",
     "realm": "^10.6.1"
   }
 }

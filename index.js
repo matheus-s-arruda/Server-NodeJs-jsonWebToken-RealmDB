@@ -1,5 +1,7 @@
 const webtoken = require('jsonwebtoken');
 const express = require('express');
+const open = require('open');
+const Fs = require('fs');
 
 const rotas = require('./routes');
 
@@ -8,6 +10,7 @@ const router = express.Router()
 server.use(express.json({extended: true}))
 
 const SECRET = "jsonwebtoken"
+
 function verifyWebToken(req, res, next){
     const token = req.headers['x-access-token']
     webtoken.verify(token, SECRET, (err, decoded)=>{
@@ -34,7 +37,7 @@ router.post('/users/login',(req, res)=>{
     readUserFunction()
 })
 
-router.post('/users/create', (req, res)=>{
+router.post('/users/create', (req, res)=>{ 
     const {usuario, senha} = req.body
 
     async function createUserFunc(){
@@ -47,7 +50,7 @@ router.post('/users/create', (req, res)=>{
     createUserFunc()
 })
 
-router.delete('/users/:user', verifyWebToken,(req, res)=>{
+router.delete('/users/:user', verifyWebToken, (req, res)=>{
     const {user} = req.params
 
     async function deleteUserfunc(){
@@ -57,8 +60,7 @@ router.delete('/users/:user', verifyWebToken,(req, res)=>{
     deleteUserfunc()
 })
 
-router.get('/users/clear', (req, res)=>{
-
+router.get('/users/clear', verifyWebToken, (req, res)=>{
     async function clearfunc(){
         const result = await rotas.clearAll()
         res.send(result)
@@ -66,7 +68,7 @@ router.get('/users/clear', (req, res)=>{
     clearfunc()
 })
 
-router.get('/users/allusers', (req, res)=>{
+router.get('/users/allusers', verifyWebToken, (req, res)=>{
 
     async function allUsersfunc(){
         const result = await rotas.allUsers()
@@ -122,5 +124,20 @@ router.delete('/itens/:id', verifyWebToken, (req, res)=>{
     deleteItem()
 })
 
+//////////////////////////////
+
+router.get('/',(req, res)=>{
+    Fs.readFile('./src/main.html', null, function (error, data) {
+        if (error) {
+            res.writeHead(404);
+            res.write('Whoops! File not found!');
+        } else {
+            res.write(data);
+        }
+        res.end();
+    });
+})
+
+open('http://localhost:11213')
 server.use(router)
-server.listen(3000, ()=>{console.log('servidor online')})
+server.listen(11213, ()=>{console.log('servidor online')})
